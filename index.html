@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Twelve short tasks you could do on an ordinary day. Rate them, guess who wrote what, and see the answer.">
+<meta property="og:title" content="Twelve Small Tasks">
+<meta property="og:description" content="Twelve short tasks. Some written by a person, some by an AI.">
+<meta name="theme-color" content="#f7f7f3">
+<title>Twelve Small Tasks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap">
+<style>
+  /* Layout: one task per screen, explorer header, a strip of twelve squares as the running record. Light only, to match operations.ramos-saavedra.com. */
+  :root {
+    color-scheme: light;
+    --ink:#161616; --muted:#62625e; --line:#c8c8c1; --line-strong:#70706a;
+    --paper:#f7f7f3; --hover:#ffffff; --selected:#e5e5de; --focus:#2457d6;
+    --utility:#eceff5; --utility-ink:#465065; --utility-line:#aeb5c4;
+    --sans:'IBM Plex Sans', Arial, sans-serif;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font:400 17px/1.5 var(--sans); text-rendering:optimizeLegibility; }
+  main { width:min(820px, calc(100% - 36px)); margin:0 auto; padding-block:30px 88px; }
+
+  .preview { display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; margin-bottom:22px; padding:10px 14px; background:var(--utility); color:var(--utility-ink); border:1px solid var(--utility-line); font-size:14px; }
+  .preview b { font-weight:500; }
+  .preview .switch { display:flex; gap:6px; }
+  .preview button { width:auto; padding:4px 10px; font-size:14px; border-color:var(--utility-line); color:var(--utility-ink); background:transparent; }
+  .preview button[aria-pressed="true"] { background:var(--utility-ink); color:var(--utility); border-color:var(--utility-ink); }
+
+  header { display:flex; justify-content:space-between; align-items:flex-end; gap:24px; padding-bottom:16px; border-bottom:1px solid var(--ink); }
+  .brand, .count { font-size:14px; letter-spacing:.015em; }
+  .count { color:var(--muted); text-align:right; font-variant-numeric:tabular-nums; }
+  .strip { display:grid; grid-template-columns:repeat(12, 1fr); gap:5px; margin:14px 0 0; }
+  .strip span { aspect-ratio:1; max-width:100%; border:1px solid var(--line-strong); background:transparent; transition:background-color .25s ease; }
+  .strip span.done { background:var(--ink); border-color:var(--ink); }
+  .strip span.now { border-color:var(--ink); border-width:2px; }
+
+  h1, h2 { font-weight:400; text-wrap:balance; }
+  h1 { margin:64px 0 14px; font-size:clamp(40px,8vw,64px); line-height:1.02; letter-spacing:-.03em; }
+  h2 { margin:0 0 12px; font-size:clamp(28px,4vw,40px); line-height:1.12; letter-spacing:-.018em; }
+  p { max-width:62ch; }
+  .intro { margin:0 0 30px; color:var(--muted); font-size:18px; line-height:1.48; }
+  .eyebrow { margin:48px 0 18px; color:var(--muted); font-size:14px; letter-spacing:.02em; font-variant-numeric:tabular-nums; }
+
+  button { width:100%; color:inherit; font:inherit; text-align:left; background:transparent; border:1px solid var(--line-strong); border-radius:0; padding:17px 18px; cursor:pointer; transition:background-color .12s ease, border-color .12s ease, color .12s ease; }
+  button:hover { background:var(--hover); border-color:var(--ink); }
+  button:focus-visible, textarea:focus-visible, input:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+  button:disabled { cursor:default; color:var(--line-strong); border-color:var(--line); background:transparent; }
+  .primary { margin-top:22px; background:var(--ink); color:var(--paper); border-color:var(--ink); display:flex; justify-content:space-between; align-items:center; }
+  .primary:hover { background:#333; color:var(--paper); }
+  .primary:disabled { background:var(--selected); color:var(--muted); border-color:var(--line); }
+  .text-link { width:auto; padding:6px 0; border:0; border-bottom:1px solid var(--line-strong); font-size:14px; color:var(--muted); background:transparent; }
+  .text-link:hover { background:transparent; color:var(--ink); }
+
+  /* the field on the opening screen */
+  .field { display:grid; grid-template-columns:repeat(6, 1fr); gap:8px; margin:6px 0 34px; max-width:420px; }
+  .field span { aspect-ratio:1; max-width:100%; border:1px solid var(--ink); }
+  .field span:nth-child(3n+1) { background:var(--ink); }
+  .field span:nth-child(5) { background:repeating-linear-gradient(45deg, var(--ink) 0 2px, transparent 2px 7px); }
+  .field span:nth-child(10) { border-radius:50%; }
+
+  .consent { display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:start; padding:18px; border:1px solid var(--line); background:rgba(255,255,255,.3); font-size:15px; color:var(--muted); }
+  .consent input { width:20px; height:20px; margin:2px 0 0; accent-color:var(--ink); }
+  .consent label { color:var(--ink); }
+
+  /* task screen */
+  .task { margin:0 0 30px; font-size:clamp(30px,6.2vw,52px); line-height:1.1; letter-spacing:-.022em; text-wrap:balance; max-width:20ch; }
+  .stamp { display:inline-flex; align-items:center; gap:10px; margin:0 0 34px; padding:6px 12px 6px 8px; border:1px solid var(--ink); font-size:14px; letter-spacing:.02em; }
+  .stamp i { display:block; width:14px; height:14px; background:var(--ink); }
+  .question { margin:0 0 14px; font-size:19px; }
+  .scale { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:8px; max-width:460px; }
+  .scale button { aspect-ratio:1; max-width:100%; padding:0; display:grid; place-items:center; font-size:20px; font-variant-numeric:tabular-nums; }
+  .scale button[aria-pressed="true"] { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .ends { display:flex; justify-content:space-between; max-width:460px; margin-top:8px; color:var(--muted); font-size:14px; }
+  .task-nav { display:flex; gap:22px; margin-top:44px; }
+  .enter { animation:enter .35s ease both; }
+  @keyframes enter { from { opacity:.25; transform:translateX(18px); } to { opacity:1; transform:none; } }
+
+  .choices { display:grid; gap:9px; }
+  .choices button[aria-pressed="true"] { background:var(--selected); border-color:var(--ink); }
+  .label { margin:30px 0 12px; font-size:14px; color:var(--muted); letter-spacing:.02em; }
+
+  /* tile grids: pick three, spot the AI, the reveal */
+  .tiles { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:9px; margin-top:26px; }
+  .tile { position:relative; min-height:150px; display:flex; flex-direction:column; justify-content:space-between; gap:14px; padding:14px 14px 12px; font-size:15px; line-height:1.35; }
+  .tile .n { color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums; }
+  .tile[aria-pressed="true"] { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .tile[aria-pressed="true"] .n { color:var(--line); }
+  .tally { margin-top:14px; color:var(--muted); font-size:14px; font-variant-numeric:tabular-nums; }
+
+  .choices.two { grid-template-columns:repeat(2, minmax(0,1fr)); }
+  .choices.two button { padding:14px 16px; font-size:16px; }
+  .tiles.few { grid-template-columns:repeat(2, minmax(0,1fr)); }
+  .tiles.one { grid-template-columns:minmax(0, 420px); }
+
+  /* a pair: two tasks side by side, tap the AI one */
+  .pair { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; margin-top:28px; }
+  .pair button { min-height:220px; display:flex; flex-direction:column; justify-content:space-between; gap:18px; padding:20px; font-size:clamp(18px,2.4vw,22px); line-height:1.25; letter-spacing:-.01em; }
+  .pair button .n { color:var(--muted); font-size:13px; letter-spacing:.02em; }
+  .pair button[aria-pressed="true"] { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .pair button[aria-pressed="true"] .n { color:var(--line); }
+  .pips { display:flex; gap:6px; margin:48px 0 18px; }
+  .pips span { width:22px; height:22px; border:1px solid var(--line-strong); }
+  .pips span.done { background:var(--ink); border-color:var(--ink); }
+  .pips span.now { border:2px solid var(--ink); }
+
+  textarea { width:100%; min-height:150px; padding:16px; font:inherit; color:var(--ink); background:rgba(255,255,255,.35); border:1px solid var(--line-strong); border-radius:0; resize:vertical; }
+
+  .reveal { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:9px; margin-top:26px; }
+  .card { min-height:170px; display:flex; flex-direction:column; justify-content:space-between; gap:12px; padding:14px; border:1px solid var(--ink); font-size:15px; line-height:1.35; animation:flip .5s ease both; }
+  .card.ai { background:var(--ink); color:var(--paper); }
+  .card .who { font-size:13px; letter-spacing:.02em; }
+  .card .meta { display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:13px; font-variant-numeric:tabular-nums; }
+  .dots { display:flex; gap:3px; }
+  .dots i { width:9px; height:9px; border:1px solid currentColor; }
+  .dots i.on { background:currentColor; }
+  .guess { opacity:.75; }
+  @keyframes flip { from { transform:rotateY(80deg); opacity:0; } to { transform:none; opacity:1; } }
+  .score { margin:24px 0 0; font-size:clamp(22px,3.4vw,30px); letter-spacing:-.012em; }
+  .debrief { margin-top:40px; padding-top:20px; border-top:1px solid var(--ink); color:var(--muted); font-size:15px; }
+  .debrief p { margin:0 0 10px; }
+  footer { margin-top:64px; color:var(--muted); font-size:14px; }
+
+  @media (max-width:620px) {
+    .tiles, .reveal { grid-template-columns:repeat(2, minmax(0,1fr)); }
+    .choices.two { grid-template-columns:1fr; }
+    .pair { grid-template-columns:1fr; }
+    .pair button { min-height:150px; }
+    .tile, .card { min-height:132px; font-size:14px; }
+    .strip { gap:3px; }
+    h1 { margin-top:44px; }
+  }
+  @media (prefers-reduced-motion:reduce) { .enter, .card { animation:none; } .strip span { transition:none; } }
+</style>
+</head>
+<body>
+
+
+<main>
+  <div class="preview" id="preview">
+    <span><b>Preview for Alejandro.</b> Answers are not saved.</span>
+    <span class="switch" role="group" aria-label="Version">
+      <button type="button" id="vA" data-v="A">Version A · no authors</button>
+      <button type="button" id="vB" data-v="B">Version B · authors shown</button>
+    </span>
+  </div>
+
+  <header>
+    <div class="brand">Alejandro Ramos Saavedra</div>
+    <div class="count" id="count">0 of 12 rated</div>
+  </header>
+  <div class="strip" id="strip" aria-hidden="true"></div>
+
+  <section id="screen" aria-live="polite"></section>
+
+  <footer>© 2026 Alejandro Ramos Saavedra</footer>
+</main>
+
+<script>
+(() => {
+  const PREVIEW = false;          // false on the live site
+  const TALLY_FORM = 'ODpKNR';   // answers arrive here as hidden fields
+
+  // Six tasks from Alejandro's first hundred (Task Archive, TA ids) and six written by Claude on 13 Oct 2026.
+  // H1 and A1 share a theme, H2 and A2, and so on. The order alternates authors and splits each pair.
+  const TASKS = [
+    { id:'H1', by:'human', src:'TA-0017', text:"Take a different path for a familiar route. It doesn't matter if it's longer." },
+    { id:'A2', by:'ai', text:"One piece of fruit. Peel or cut it as slowly as you can, then eat it in ten bites." },
+    { id:'H3', by:'human', src:'TA-0027', text:"Write 10 cards with mysterious messages. Go to a library, find interesting books and leave the cards there." },
+    { id:'A4', by:'ai', text:"Find out one thing about a neighbour you only ever nod to. Ask them." },
+    { id:'H5', by:'human', src:'TA-0086', text:"Read page 100 of 10 books you have at home. Try to find connections." },
+    { id:'A6', by:'ai', text:"Sort one drawer by size, smallest at the front. Leave it like that for a week." },
+    { id:'A1', by:'ai', text:"Walk somewhere you go every week. Stop at every crossing and look up before you carry on." },
+    { id:'H2', by:'human', src:'TA-0018', text:"A chocolate or a sweet treat. Extend the time it takes you to eat it as long as possible." },
+    { id:'A3', by:'ai', text:"Write five postcards to nobody in particular. Leave them face down on park benches." },
+    { id:'H4', by:'human', src:'TA-0056', text:"Notice or ask the name of someone who usually serves you (at the supermarket, café) and memorize it." },
+    { id:'A5', by:'ai', text:"Take the third book from the left on any shelf. Copy its first sentence out by hand." },
+    { id:'H6', by:'human', src:'TA-0089', text:"Make all the clothes in your closet face the same direction." }
+  ];
+  const BY_ID = Object.fromEntries(TASKS.map(t => [t.id, t]));
+  const AUTHOR = { human:'Written by Alejandro', ai:'Written by an AI (Claude)' };
+  const ROLES = [
+    'Design, architecture or art', 'Business, management or consulting',
+    'Education or research', 'Engineering, science or technology',
+    'Health, care or social work', 'Public sector or non-profit',
+    'Student', 'Something else'
+  ];
+  const PAIRS_SHOWN = 3;
+
+  const $ = (s) => document.querySelector(s);
+  const screen = $('#screen');
+  let S;
+
+  const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+  function fresh(version) {
+    const order = Math.random() < .5 ? 1 : 2;
+    const list = order === 1 ? TASKS.slice() : TASKS.slice().reverse();
+    const pairs = shuffle([1,2,3,4,5,6]).slice(0, PAIRS_SHOWN).sort((a,b) => a-b)
+      .map(n => ({ n, sides: shuffle(['H'+n, 'A'+n]), guess:null }));
+    return { version, order, list, pairs, step:'intro', i:0, pi:0, consent:false, role:null, aiFeel:null,
+             ratings:{}, first:null, note:'' };
+  }
+
+  function strip() {
+    const done = Object.keys(S.ratings).length;
+    $('#count').textContent = done + ' of 12 rated';
+    $('#strip').innerHTML = S.list.map((t, k) =>
+      `<span class="${S.ratings[t.id] ? 'done' : ''} ${S.step==='task' && k===S.i ? 'now' : ''}"></span>`).join('');
+  }
+
+  function go(step, i) { S.step = step; if (i !== undefined) { if (step === 'pair') S.pi = i; else S.i = i; } render(); window.scrollTo({ top:0 }); }
+  const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const pad = (n) => String(n).padStart(2, '0');
+
+  function scale(name, value, labels) {
+    return `<div class="scale" role="group" aria-label="${labels[0]} to ${labels[1]}">` +
+      [1,2,3,4,5].map(n => `<button type="button" id="${name}-${n}" data-val="${n}" aria-pressed="${value===n}">${n}</button>`).join('') +
+      `</div><div class="ends"><span>${labels[0]}</span><span>${labels[1]}</span></div>`;
+  }
+
+  // the tasks the person gave their top score
+  function topGroup() {
+    const max = Math.max(...S.list.map(t => S.ratings[t.id] || 0));
+    return { max, ids: S.list.filter(t => S.ratings[t.id] === max).map(t => t.id) };
+  }
+
+  function afterRatings() {
+    const g = topGroup();
+    if (g.ids.length === 1) S.first = g.ids[0];
+    go('first');
+  }
+  function afterFirst() { S.version === 'A' ? go('pair', 0) : go('note'); }
+
+  const views = {
+    intro() {
+      return `
+        <h1>Twelve small tasks</h1>
+        <p class="intro">Twelve short tasks you could do on an ordinary day. Say how much you'd want to do each one, then answer two quick questions. It takes about five minutes.</p>
+        <div class="field" aria-hidden="true">${'<span></span>'.repeat(12)}</div>
+        <div class="consent">
+          <input type="checkbox" id="consent" ${S.consent ? 'checked' : ''}>
+          <div><label for="consent">I'm happy to take part.</label><br>
+          Your answers are anonymous and you can stop at any point. Alejandro keeps them and may write about the results. At the end you'll see what the test was looking at.</div>
+        </div>
+        <button type="button" class="primary" id="start" ${S.consent ? '' : 'disabled'}><span>Start</span><span>→</span></button>`;
+    },
+    about() {
+      return `
+        <p class="eyebrow">Before the tasks</p>
+        <h2>A little about you</h2>
+        <p class="label">What kind of work do you do, mostly?</p>
+        <div class="choices two">${ROLES.map((r,k) =>
+          `<button type="button" id="role-${k}" data-role="${esc(r)}" aria-pressed="${S.role===r}">${esc(r)}</button>`).join('')}</div>
+        <p class="label">How do you feel about creative work made with AI?</p>
+        ${scale('ai', S.aiFeel, ['Very negative','Very positive'])}
+        <button type="button" class="primary" id="next" ${S.role && S.aiFeel ? '' : 'disabled'}><span>See the first task</span><span>→</span></button>`;
+    },
+    task() {
+      const t = S.list[S.i];
+      return `<div class="enter">
+        <p class="eyebrow">Task ${pad(S.i+1)} of 12</p>
+        <p class="task">${esc(t.text)}</p>
+        ${S.version === 'B' ? `<div class="stamp"><i></i>${AUTHOR[t.by]}</div>` : ''}
+        <p class="question">How much would you want to do this?</p>
+        ${scale('r', S.ratings[t.id] || null, ['Not at all','Very much'])}
+        <div class="task-nav">
+          <button type="button" class="text-link" id="back">← Back</button>
+          ${S.ratings[t.id] && S.i < 11 ? `<button type="button" class="text-link" id="fwd">Next →</button>` : ''}
+        </div></div>`;
+    },
+    first() {
+      const g = topGroup();
+      const tiles = g.ids.map(id => {
+        const t = BY_ID[id], k = S.list.indexOf(t);
+        return `<button type="button" class="tile" id="f-${id}" data-id="${id}" aria-pressed="${S.first===id}">
+          <span>${esc(t.text)}</span><span class="n">Task ${pad(k+1)} · you gave it ${g.max}</span></button>`; }).join('');
+      const cls = g.ids.length === 1 ? 'one' : g.ids.length <= 4 ? 'few' : '';
+      if (g.ids.length === 1) return `<div class="enter">
+        <p class="eyebrow">Your favourite</p>
+        <h2>You rated this one highest</h2>
+        <div class="tiles ${cls}">${tiles}</div>
+        <button type="button" class="primary" id="next"><span>Continue</span><span>→</span></button></div>`;
+      return `<div class="enter">
+        <p class="eyebrow">Your favourites</p>
+        <h2>You gave ${g.ids.length === 12 ? 'every task' : `these ${g.ids.length}`} a ${g.max}. Which would you do first?</h2>
+        <div class="tiles ${cls}">${tiles}</div>
+        <button type="button" class="primary" id="next" ${S.first ? '' : 'disabled'}><span>Continue</span><span>→</span></button></div>`;
+    },
+    pair() {
+      const p = S.pairs[S.pi];
+      return `<div class="enter">
+        <div class="pips" aria-hidden="true">${S.pairs.map((q,k) => `<span class="${q.guess ? 'done' : ''} ${k===S.pi ? 'now' : ''}"></span>`).join('')}</div>
+        <p class="eyebrow" style="margin-top:0">Guess ${S.pi+1} of ${S.pairs.length}</p>
+        <h2>One of these was written by an AI. Which one?</h2>
+        <div class="pair">${p.sides.map((id,k) =>
+          `<button type="button" id="g-${id}" data-id="${id}" aria-pressed="${p.guess===id}">
+            <span>${esc(BY_ID[id].text)}</span><span class="n">${k===0 ? 'Left' : 'Right'}</span></button>`).join('')}</div>
+        <div class="task-nav"><button type="button" class="text-link" id="back">← Back</button></div></div>`;
+    },
+    note() {
+      return `
+        <p class="eyebrow">One last question</p>
+        <h2>Did knowing who wrote a task change how you read it?</h2>
+        <p class="intro">A sentence or two is plenty. You can leave it blank.</p>
+        <label for="note" class="label" style="display:block;margin-top:0">Your answer</label>
+        <textarea id="note">${esc(S.note)}</textarea>
+        <button type="button" class="primary" id="send"><span>Send my answers</span><span>→</span></button>`;
+    },
+    ready() {
+      return `
+        <p class="eyebrow">All done</p>
+        <h2>Send your answers to see who wrote what</h2>
+        <button type="button" class="primary" id="send"><span>Send my answers</span><span>→</span></button>`;
+    },
+    done() {
+      const guessed = Object.fromEntries(S.pairs.flatMap(p => p.sides.map(id => [id, p.guess])));
+      const right = S.pairs.filter(p => p.guess && BY_ID[p.guess].by === 'ai').length;
+      return `
+        <p class="eyebrow">Thank you.</p>
+        <h2>Who wrote what</h2>
+        <p class="intro" style="margin-bottom:0">Black squares were written by an AI (Claude). White squares were written by Alejandro by hand, without AI.</p>
+        ${S.version==='A' ? `<p class="score">You spotted the AI in ${right} of ${S.pairs.length} pairs.</p>` : ''}
+        <div class="reveal">${S.list.map((t,k) => {
+          const r = S.ratings[t.id] || 0;
+          const g = guessed[t.id];
+          return `<div class="card ${t.by==='ai' ? 'ai' : ''}" style="animation-delay:${k*60}ms">
+            <span class="who">${t.by==='ai' ? 'AI' : 'Alejandro'}${S.first===t.id ? ' · your first pick' : ''}</span>
+            <span>${esc(t.text)}</span>
+            <span class="meta"><span class="dots" aria-label="You rated it ${r} of 5">${[1,2,3,4,5].map(n => `<i class="${n<=r?'on':''}"></i>`).join('')}</span>
+            ${S.version==='A' && g ? `<span class="guess">${g===t.id ? 'you said AI' : 'you said person'}</span>` : ''}</span>
+          </div>`; }).join('')}</div>
+        <div class="debrief">
+          <p>This test asks whether knowing who wrote a task changes how much people want to do it. Half of the people who take it see the authors, as above, and half don't.</p>
+          <p>Each AI task was written to sit beside one of Alejandro's on a similar theme, so the pairs can be compared.</p>
+        </div>
+        ${PREVIEW ? `<details class="label" style="margin-top:30px"><summary>What goes to the Tally form (preview only)</summary><pre style="white-space:pre-wrap;font-size:13px">${esc(JSON.stringify(fields(), null, 1))}</pre></details>` : ''}
+        <button type="button" class="text-link" id="again" style="margin-top:26px">Start again</button>`;
+    }
+  };
+
+  // the hidden fields of the Tally form, one per name
+  function fields() {
+    const f = { version:S.version, order:S.order, role:S.role, ai_feel:S.aiFeel, first_pick:S.first || '' };
+    TASKS.forEach(t => { f['r_' + t.id] = S.ratings[t.id] || ''; });
+    if (S.version === 'A') {
+      f.pairs_shown = S.pairs.map(p => p.n).join(',');
+      f.pairs_guessed_ai = S.pairs.map(p => p.guess).join(',');
+      f.pairs_right = S.pairs.filter(p => p.guess && BY_ID[p.guess].by === 'ai').length;
+    } else f.note = S.note;
+    return f;
+  }
+
+  function send() {
+    if (PREVIEW) { go('done'); return; }
+    if (!window.Tally) {   // pop-up script blocked: send through the plain form link instead
+      window.open('https://tally.so/r/' + TALLY_FORM + '?' + new URLSearchParams(fields()).toString(), '_blank', 'noopener');
+      go('done'); return;
+    }
+    window.Tally.openPopup(TALLY_FORM, { layout:'modal', width:460, hideTitle:true, autoClose:900,
+      hiddenFields: fields(), onSubmit: () => go('done') });
+  }
+
+  function render() {
+    screen.innerHTML = views[S.step]();
+    strip();
+    bind();
+  }
+
+  function bind() {
+    const on = (sel, fn) => { const el = $(sel); if (el) el.addEventListener('click', fn); };
+    const c = $('#consent');
+    if (c) c.addEventListener('change', () => { S.consent = c.checked; $('#start').disabled = !c.checked; });
+    on('#start', () => go('about'));
+    on('#send', send);
+
+    if (S.step === 'about') {
+      screen.querySelectorAll('[data-role]').forEach(b => b.addEventListener('click', () => { S.role = b.dataset.role; render(); }));
+      screen.querySelectorAll('[id^="ai-"]').forEach(b => b.addEventListener('click', () => { S.aiFeel = +b.dataset.val; render(); }));
+      on('#next', () => go('task', 0));
+    }
+    if (S.step === 'task') {
+      const t = S.list[S.i];
+      screen.querySelectorAll('[id^="r-"]').forEach(b => b.addEventListener('click', () => {
+        S.ratings[t.id] = +b.dataset.val;
+        S.first = null;
+        screen.querySelectorAll('[id^="r-"]').forEach(x => x.setAttribute('aria-pressed', x===b));
+        strip();
+        setTimeout(() => S.i < 11 ? go('task', S.i+1) : afterRatings(), 380);
+      }));
+      on('#back', () => S.i === 0 ? go('about') : go('task', S.i-1));
+      on('#fwd', () => go('task', S.i+1));
+    }
+    if (S.step === 'first') {
+      screen.querySelectorAll('.tile').forEach(b => b.addEventListener('click', () => {
+        if (topGroup().ids.length === 1) return;
+        S.first = b.dataset.id; render();
+      }));
+      on('#next', afterFirst);
+    }
+    if (S.step === 'pair') {
+      const p = S.pairs[S.pi];
+      screen.querySelectorAll('.pair button').forEach(b => b.addEventListener('click', () => {
+        p.guess = b.dataset.id;
+        screen.querySelectorAll('.pair button').forEach(x => x.setAttribute('aria-pressed', x===b));
+        setTimeout(() => S.pi < S.pairs.length - 1 ? go('pair', S.pi+1) : go('ready'), 380);
+      }));
+      on('#back', () => S.pi === 0 ? go('first') : go('pair', S.pi-1));
+    }
+    if (S.step === 'note') {
+      const n = $('#note'); n.addEventListener('input', () => { S.note = n.value; });
+    }
+    on('#again', () => start(S.version));
+  }
+
+  function start(v) {
+    S = fresh(v);
+    $('#vA').setAttribute('aria-pressed', v==='A');
+    $('#vB').setAttribute('aria-pressed', v==='B');
+    render();
+  }
+
+  if (!PREVIEW) {
+    $('#preview').hidden = true;
+    const tally = document.createElement('script');
+    tally.src = 'https://tally.so/widgets/embed.js'; tally.async = true;
+    document.head.appendChild(tally);
+  }
+  $('#vA').addEventListener('click', () => start('A'));
+  $('#vB').addEventListener('click', () => start('B'));
+  start(PREVIEW ? 'A' : (Math.random() < .5 ? 'A' : 'B'));
+})();
+</script>
+
+</body>
+</html>
