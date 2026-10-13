@@ -1,9 +1,7 @@
 # Twelve Small Tasks
 
-A short online test: does knowing who wrote a task (a person or an AI) change how much people want to do it?
+A short test by Alejandro Ramos Saavedra: twelve tasks you could do on an ordinary day, about five minutes, with a reveal at the end.
 
-- `index.html` is the whole page. Each visitor gets Version A (no authors shown) or Version B (authors shown) at random.
-- Answers go to the Tally form `ODpKNR` as hidden fields.
-- Six tasks are Alejandro Ramos Saavedra's own, from his first hundred; six were written by Claude to sit beside them on similar themes.
+Take it at https://tasks.ramos-saavedra.com. What it looks at is explained at the end of the test, and here once it closes.
 
 © 2026 Alejandro Ramos Saavedra
