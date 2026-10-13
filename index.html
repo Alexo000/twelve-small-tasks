@@ -20,6 +20,7 @@
     --sans:'IBM Plex Sans', Arial, sans-serif;
   }
   * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
   body { margin:0; background:var(--paper); color:var(--ink); font:400 17px/1.5 var(--sans); text-rendering:optimizeLegibility; }
   main { width:min(820px, calc(100% - 36px)); margin:0 auto; padding-block:30px 88px; }
 
@@ -139,13 +140,6 @@
 
 
 <main>
-  <div class="preview" id="preview">
-    <span><b>Preview for Alejandro.</b> Answers are not saved.</span>
-    <span class="switch" role="group" aria-label="Version">
-      <button type="button" id="vA" data-v="A">Version A · no authors</button>
-      <button type="button" id="vB" data-v="B">Version B · authors shown</button>
-    </span>
-  </div>
 
   <header>
     <div class="brand">Alejandro Ramos Saavedra</div>
@@ -417,19 +411,16 @@
 
   function start(v) {
     S = fresh(v);
-    $('#vA').setAttribute('aria-pressed', v==='A');
-    $('#vB').setAttribute('aria-pressed', v==='B');
+    if ($('#vA')) { $('#vA').setAttribute('aria-pressed', v==='A'); $('#vB').setAttribute('aria-pressed', v==='B'); }
     render();
   }
 
   if (!PREVIEW) {
-    $('#preview').hidden = true;
     const tally = document.createElement('script');
     tally.src = 'https://tally.so/widgets/embed.js'; tally.async = true;
     document.head.appendChild(tally);
   }
-  $('#vA').addEventListener('click', () => start('A'));
-  $('#vB').addEventListener('click', () => start('B'));
+  if ($('#vA')) { $('#vA').addEventListener('click', () => start('A')); $('#vB').addEventListener('click', () => start('B')); }
   start(PREVIEW ? 'A' : (Math.random() < .5 ? 'A' : 'B'));
 })();
 </script>
